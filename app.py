@@ -14,7 +14,7 @@ le_smoking_status = joblib.load('smoking_status_label_encoder.pkl')
 le_alcohol_consumption = joblib.load('alcohol_consumption_label_encoder.pkl')
 le_response = joblib.load("response_label_encoder.pkl")
 
-st.title("Osteoarthritis Risk Prediction")
+st.title("Drug Response Prediction for Osteoarthritis Patients")
 
 # User Inputs
 age = st.number_input("Age", 20, 100)
