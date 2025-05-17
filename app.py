@@ -13,8 +13,6 @@ le_gender = joblib.load('gender_label_encoder.pkl')
 le_drug_type = joblib.load('drug_type_label_encoder.pkl')
 le_dosage_level = joblib.load('dosage_level_label_encoder.pkl')
 le_activity_level = joblib.load('activity_level_label_encoder.pkl')
-le_smoking_status = joblib.load('smoking_status_label_encoder.pkl')
-le_alcohol_consumption = joblib.load('alcohol_consumption_label_encoder.pkl')
 le_response = joblib.load('response_label_encoder.pkl')
 
 @app.route("/")
@@ -39,12 +37,11 @@ def predict():
         treatment_duration = int(data["treatment_duration"])
         activity_level = le_activity_level.transform([data["activity_level"]])[0]
         diet_score = float(data["diet_score"])
-        smoking_status = le_smoking_status.transform([data["smoking_status"]])[0]
-        alcohol_consumption = le_alcohol_consumption.transform([data["alcohol_consumption"]])[0]
+        
 
         input_data = np.array([[age, gender, bmi, oa_severity, duration_of_oa, crp, esr,
                                 drug_type, dosage_level, treatment_duration, activity_level,
-                                diet_score, smoking_status, alcohol_consumption]])
+                                diet_score]])
 
         prediction_encoded = model.predict(input_data)[0]
         prediction_label = le_response.inverse_transform([prediction_encoded])[0]
