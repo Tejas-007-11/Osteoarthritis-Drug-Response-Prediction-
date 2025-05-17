@@ -1,68 +1,55 @@
-import streamlit as st
+from flask import Flask, request, jsonify
 import joblib
 import numpy as np
+from flask_cors import CORS
 
-# Load the model
+app = Flask(__name__)
+CORS(app)  # Allow requests from frontend
+
+# Load the trained model and encoders
 model = joblib.load('oa_drug_response_model.pkl')
-
-# Load LabelEncoders
 le_gender = joblib.load('gender_label_encoder.pkl')
 le_drug_type = joblib.load('drug_type_label_encoder.pkl')
 le_dosage_level = joblib.load('dosage_level_label_encoder.pkl')
 le_activity_level = joblib.load('activity_level_label_encoder.pkl')
 le_smoking_status = joblib.load('smoking_status_label_encoder.pkl')
 le_alcohol_consumption = joblib.load('alcohol_consumption_label_encoder.pkl')
-le_response = joblib.load("response_label_encoder.pkl")
+le_response = joblib.load('response_label_encoder.pkl')
 
-st.title("Drug Response Prediction for Osteoarthritis Patients")
+@app.route("/predict", methods=["POST"])
+def predict():
+    try:
+        data = request.get_json()
 
-# User Inputs
-age = st.number_input("Age", 20, 100)
-gender = st.selectbox("Gender", ["Male", "Female"])
-bmi = st.number_input("BMI", 10.0, 50.0)
-oa_severity = st.number_input("OA Severity (1–4 (Kellgren-Lawrence grade))", 0.0, 10.0)
-duration_of_oa = st.number_input("Duration of OA (in months)", 0, 240)
-crp = st.number_input("CRP Level (0–10 mg/L)", 0.0, 100.0)
-esr = st.number_input("ESR Level (0–100 mm/hr)", 0.0, 100.0)
-drug_type = st.selectbox("Drug Type", ["NSAID", "Corticosteroid", "Glucosamine", "Physiotherapy"])
-dosage_level = st.selectbox("Dosage Level", ["Low", "Medium", "High"])
-treatment_duration = st.number_input("Treatment Duration (in months)", 0, 365)
-activity_level = st.selectbox("Activity Level", ["Low", "Moderate", "High"])
-diet_score = st.number_input("Diet Score (0-10)", 0.0, 10.0)
-smoking_status = st.selectbox("Smoking Status", ["Yes", "No"])
-alcohol_consumption = st.selectbox("Alcohol Consumption", ["Yes", "No"])
+        # Get inputs
+        age = float(data["age"])
+        gender = le_gender.transform([data["gender"]])[0]
+        bmi = float(data["bmi"])
+        oa_severity = float(data["oa_severity"])
+        duration_of_oa = int(data["duration_of_oa"])
+        crp = float(data["crp"])
+        esr = float(data["esr"])
+        drug_type = le_drug_type.transform([data["drug_type"]])[0]
+        dosage_level = le_dosage_level.transform([data["dosage_level"]])[0]
+        treatment_duration = int(data["treatment_duration"])
+        activity_level = le_activity_level.transform([data["activity_level"]])[0]
+        diet_score = float(data["diet_score"])
+        smoking_status = le_smoking_status.transform([data["smoking_status"]])[0]
+        alcohol_consumption = le_alcohol_consumption.transform([data["alcohol_consumption"]])[0]
 
-# Encode categorical data
-gender_enc = le_gender.transform([gender])[0]
-drug_type_enc = le_drug_type.transform([drug_type])[0]
-dosage_level_enc = le_dosage_level.transform([dosage_level])[0]
-activity_level_enc = le_activity_level.transform([activity_level])[0]
-smoking_status_enc = le_smoking_status.transform([smoking_status])[0]
-alcohol_enc = le_alcohol_consumption.transform([alcohol_consumption])[0]
+        # Prepare input
+        input_data = np.array([[age, gender, bmi, oa_severity, duration_of_oa, crp, esr,
+                                drug_type, dosage_level, treatment_duration, activity_level,
+                                diet_score, smoking_status, alcohol_consumption]])
 
-# Combine all inputs in correct order
-input_data = np.array([[
-    age,
-    gender_enc,
-    bmi,
-    oa_severity,
-    duration_of_oa,
-    crp,
-    esr,
-    drug_type_enc,
-    dosage_level_enc,
-    treatment_duration,
-    activity_level_enc,
-    diet_score,
-    smoking_status_enc,
-    alcohol_enc
-]])
+        # Make prediction
+        prediction_encoded = model.predict(input_data)[0]
+        prediction_label = le_response.inverse_transform([prediction_encoded])[0]
 
-# Load response label encoder
+        return jsonify({"prediction": prediction_label})
 
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
 
-# Prediction
-if st.button("Predict Drug Response"):
-    prediction_encoded = model.predict(input_data)[0]
-    prediction_label = le_response.inverse_transform([prediction_encoded])[0]
-    st.success(f"The predicted drug response is: **{prediction_label}**")
+if __name__ == "__main__":
+    app.run(debug=True)
