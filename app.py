@@ -56,11 +56,7 @@ def predict():
     except Exception as e:
         return jsonify({"error": str(e)}), 400
 
-if __name__ == "__main__":
-    from flask import Flask
-    import os
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=10000)  # Choose any port or use default 10000
 
-    # Use the port Render assigns (default to 5000 for local testing)
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
 
