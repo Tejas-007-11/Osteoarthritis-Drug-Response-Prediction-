@@ -1,13 +1,13 @@
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify
+from flask_cors import CORS
 import joblib
 import numpy as np
-from flask_cors import CORS
 import os
 
-app = Flask(__name__, template_folder="templates", static_folder="static")
+app = Flask(__name__)
 CORS(app)
 
-# Load the trained model and encoders
+# Load model and encoders
 model = joblib.load('oa_drug_response_model.pkl')
 le_gender = joblib.load('gender_label_encoder.pkl')
 le_drug_type = joblib.load('drug_type_label_encoder.pkl')
@@ -18,15 +18,15 @@ le_alcohol_consumption = joblib.load('alcohol_consumption_label_encoder.pkl')
 le_response = joblib.load('response_label_encoder.pkl')
 
 @app.route("/")
-def home():
-    return render_template("index.html")
+def index():
+    return jsonify({"message": "OA Drug Response Prediction API is running."})
 
 @app.route("/predict", methods=["POST"])
 def predict():
     try:
         data = request.get_json()
 
-        # Extract and transform inputs
+        # Extract and encode input features
         age = float(data["age"])
         gender = le_gender.transform([data["gender"]])[0]
         bmi = float(data["bmi"])
@@ -54,6 +54,6 @@ def predict():
     except Exception as e:
         return jsonify({"error": str(e)}), 400
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
-    app.run(host='0.0.0.0', port=port)
+    app.run(host="0.0.0.0", port=port)
