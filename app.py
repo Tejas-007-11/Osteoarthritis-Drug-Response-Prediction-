@@ -52,4 +52,10 @@ def predict():
         return jsonify({"error": str(e)}), 400
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    from flask import Flask
+    import os
+
+    # Use the port Render assigns (default to 5000 for local testing)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
+
