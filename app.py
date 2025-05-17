@@ -1,15 +1,11 @@
-from flask import Flask, request, jsonify,render_template
+from flask import Flask, request, jsonify
 import joblib
 import numpy as np
 from flask_cors import CORS
+import os
 
 app = Flask(__name__)
-CORS(app) 
-app = Flask(__name__)
-
-@app.route("/")
-def home():
-    return render_template("index.html")
+CORS(app)
 
 # Load the trained model and encoders
 model = joblib.load('oa_drug_response_model.pkl')
@@ -26,7 +22,7 @@ def predict():
     try:
         data = request.get_json()
 
-        # Get inputs
+        # Extract and transform inputs
         age = float(data["age"])
         gender = le_gender.transform([data["gender"]])[0]
         bmi = float(data["bmi"])
@@ -42,12 +38,10 @@ def predict():
         smoking_status = le_smoking_status.transform([data["smoking_status"]])[0]
         alcohol_consumption = le_alcohol_consumption.transform([data["alcohol_consumption"]])[0]
 
-        # Prepare input
         input_data = np.array([[age, gender, bmi, oa_severity, duration_of_oa, crp, esr,
                                 drug_type, dosage_level, treatment_duration, activity_level,
                                 diet_score, smoking_status, alcohol_consumption]])
 
-        # Make prediction
         prediction_encoded = model.predict(input_data)[0]
         prediction_label = le_response.inverse_transform([prediction_encoded])[0]
 
@@ -57,6 +51,5 @@ def predict():
         return jsonify({"error": str(e)}), 400
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=10000)  # Choose any port or use default 10000
-
-
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host='0.0.0.0', port=port)
