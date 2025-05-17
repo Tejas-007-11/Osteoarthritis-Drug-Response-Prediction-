@@ -1,10 +1,15 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify,render_template
 import joblib
 import numpy as np
 from flask_cors import CORS
 
 app = Flask(__name__)
-CORS(app)  # Allow requests from frontend
+CORS(app) 
+app = Flask(__name__)
+
+@app.route("/")
+def home():
+    return render_template("index.html")
 
 # Load the trained model and encoders
 model = joblib.load('oa_drug_response_model.pkl')
