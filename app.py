@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
 import joblib
 import numpy as np
 from flask_cors import CORS
@@ -16,6 +16,10 @@ le_activity_level = joblib.load('activity_level_label_encoder.pkl')
 le_smoking_status = joblib.load('smoking_status_label_encoder.pkl')
 le_alcohol_consumption = joblib.load('alcohol_consumption_label_encoder.pkl')
 le_response = joblib.load('response_label_encoder.pkl')
+
+@app.route("/")
+def home():
+    return render_template("index.html")
 
 @app.route("/predict", methods=["POST"])
 def predict():
